@@ -10,16 +10,9 @@ import os
 stripe.api_key = STRIPE_SECRET_KEY
 
 
-def create_user_account(user):
-    """
-    "id":"cus_FbYcVYlQhY5Yzv"
-    """
-    strip_customer = stripe.Customer.create(
-        description = user.username,
-        email = user.email
-    )
-    return strip_customer
-
+#############################
+#商品を売る人のstripeアカウント
+#############################
 
 def create_custom_account():
     """
@@ -154,7 +147,33 @@ def upload_identity_verification_file(acct_id, img_path):
 
 
 
+#############################
+#商品を買う人のstripeアカウント
+#############################
 
+def create_user_account(user):
+    """
+    "id":"cus_FbYcVYlQhY5Yzv"
+    """
+    strip_customer = stripe.Customer.create(
+        description = user.username,
+        email = user.email
+    )
+    return strip_customer
+
+def charge_user(acct_id, amount, application_fee):
+    #https://stripe.com/docs/connect/direct-charges#collecting-fees
+    charge = stripe.Charge.create(
+        amount=amount,
+        currency='jpy',
+        description='charge',
+        source="tok_visa",  #request.POST['stripeToken']
+        application_fee_amount=application_fee,
+        stripe_account=acct_id
+    )
+    print(charge)
+    
+    
 
 
 
@@ -164,22 +183,8 @@ class ShopView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(ShopView, self).get_context_data(**kwargs)
         
-        print("home context!!!")
         #https://stripe.com/docs/api/errors/handling #エラーハンドリング
 
-        ####################################
-        # 1. Userアカウント作成
-        ####################################
-        class create_user():
-            def __init__(self, username, email):
-                self.username = username
-                self.email = email
-        
-        user = create_user(username="testuser", email="test@test.com")
-
-        #stripe_user = create_user_account(user)
-        
-        #user.
         ####################################
         # 2. Customアカウント作成
         ####################################
@@ -193,7 +198,7 @@ class ShopView(TemplateView):
     
         CONNECTED_STRIPE_ACCOUNT_ID = "acct_1F6KiGB3268k39y4"
         
-        update_custom_account(CONNECTED_STRIPE_ACCOUNT_ID)
+        #update_custom_account(CONNECTED_STRIPE_ACCOUNT_ID)
         
         ####################################
         # 4. 銀行口座の登録
@@ -206,10 +211,10 @@ class ShopView(TemplateView):
         # 5. 本人証明
         ####################################
         
-        image_path = os.path.join(BASE_DIR, "static", "identify.png")
-        print(image_path)
-        upload_identity_verification_file(CONNECTED_STRIPE_ACCOUNT_ID, image_path)
+        #image_path = os.path.join(BASE_DIR, "static", "identify.png")
+        
+        #upload_identity_verification_file(CONNECTED_STRIPE_ACCOUNT_ID, image_path)
 
-
+        #charge_user(CONNECTED_STRIPE_ACCOUNT_ID, 5000, 500)
         return context
     
